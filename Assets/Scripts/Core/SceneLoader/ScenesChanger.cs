@@ -22,11 +22,12 @@ public static class ScenesChanger
         //     (int)CONDITON_LOADING.load_ad_open_done,
         //     () => AdManager.Instant.AdsOpenIsLoaded(0)
         // );
-        oldScene = SceneManager.GetActiveScene();
-        LoadingManager.Instant.Init(1, LoadingCompleteCallback).SetMaxTimeLoading(10);
+        // oldScene = SceneManager.GetActiveScene();
+        // LoadingManager.Instant.Init(1, LoadingCompleteCallback).SetMaxTimeLoading(10);
 
-        loadSceneAsync = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
-        SceneManager.UnloadSceneAsync(oldScene);
+        // loadSceneAsync = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+        // SceneManager.UnloadSceneAsync(oldScene);
+        SceneManager.LoadScene(sceneName);
     }
 
     private static void LoadingCompleteCallback(List<bool> doneCondition)

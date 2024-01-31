@@ -25,34 +25,16 @@ public class GameManager : PersistentSingleton<GameManager>
 
         if (isDrag)
         {
-            if (hit.collider != null)
-                hit.transform.parent.parent.position = mousePosition;
-            //hit.collider.GetComponent<Block>().GetNearestObject();
-            //broad.GetNearestObject(hit.transform);
-            //broad.GetCell();
+            if (hit.collider != null && hit.collider.CompareTag("blocks"))
+            {
+                Blocks blocks = hit.collider.GetComponent<Blocks>();
+                if (blocks != null) blocks.OnDragBlocks(mousePosition);
+            }
         }
-
-        if (!isDrag) broad.CheckDoneRow();
-
-        // if (isDrag && hit.collider.gameObject != null && hit.collider.gameObject.GetComponent<Block>().blockState == BlockState.free)
-        // {
-        //     broad.GetNearestObject(hit.transform.position);
-        //     hit.transform.position = mousePosition;
-        // }
-        // if (!isDrag && hit.collider.gameObject != null)
-        // {
-        //     Cell cell = broad.GetNearestObject(hit.transform.position);
-        //     if (hit.transform.position.x > 0 && hit.transform.position.y < 0 && hit.transform.position.y < -hit.collider.bounds.size.y
-        //     && hit.transform.position.x < 8 - hit.collider.bounds.size.x)
-        //     {
-        //         hit.transform.position = cell.transform.position;
-        //         cell.cellState = CellState.active;
-        //         //hit.collider.gameObject.GetComponent<Block>().blockState = BlockState.active;
-        //     }
-        //     else
-        //     {
-        //         hit.transform.position = new Vector2(2, -12);
-        //     }
-        // }
+        else
+        {
+            broad.CheckDoneRow();
+            SignalBus.I.FireSignal<MouseButtonUpSignal>(new MouseButtonUpSignal());
+        }
     }
 }

@@ -1,75 +1,136 @@
 using System.Collections;
 using System.Collections.Generic;
+using EgdFoundation;
 using UnityEngine;
 
 public class Broad : MonoBehaviour
 {
+    [SerializeField] private Cell cellPre;
     [SerializeField] private List<Cell> cells = new List<Cell>();
     [SerializeField] private Vector2Int size = new Vector2Int(8, 8);
-    public void GetNearestObject(GameObject objectRay)
+    private void Start()
     {
-        RaycastHit2D hit = Physics2D.Raycast(objectRay.transform.position, objectRay.transform.up, 2);
-
-        float distance = hit.distance;
-        if (hit.collider != null)
+        int id = 1;
+        for (int i = 0; i <= size.x - 1; i++)
         {
-            Debug.Log("Khoảng cách đến vật phía trước: " + distance);
-            Cell cell = hit.collider.gameObject.GetComponent<Cell>();
-            if (distance < 1)
+            for (int j = 0; j <= size.y - 1; j++)
             {
-                cell.SetState(CellState.hover);
+                Cell cell = Instantiate(cellPre, transform);
+                cell.transform.position = new Vector3(i, j, 0);
+                cell.id = id;
+                cells.Add(cell);
+                id++;
             }
-            else
-            {
-                cell.SetState(CellState.free);
-            }
-            //if (Vector2.Distance(transform.position, cell.transform.position) > 1) cell.SetState(CellState.free);
         }
     }
     public void CheckDoneRow()
     {
-        int i = 0;
-        int r = 0;
-        foreach (Cell cell in cells)
+        // int id = 0;
+        // int t = 1;
+        // for (int i = 0; i <= size.x - 1; i++)
+        // {
+        //     if (t >= 8)
+        //     {
+        //         // print(t);
+        //         SignalBus.I.FireSignal<ResetCellSignal>(new ResetCellSignal(id - 7, id));
+        //     }
+        //     for (int j = 0; j <= size.y - 1; j++)
+        //     {
+        //         if (cells[id].cellState == CellState.active)
+        //         {
+        //             t++;
+        //         }
+        //         else
+        //         {
+        //             t = 0;
+        //         }
+        //         id++;
+        //     }
+        // }
+        // int o = 1;
+        // foreach (Cell cell in cells)
+        // {
+        //     if (cell.cellState == CellState.active)
+        //     { print(o); o++;}
+        // }
+        // int i = 1;
+        // int r = 1;
+        // foreach (Cell cell in cells)
+        // {
+        //     if (cell.cellState == CellState.active)
+        //     {
+        //         if (i == 8)
+        //         {
+        //             SignalBus.I.FireSignal<ResetCellSignal>(new ResetCellSignal(r - 7, r));
+        //         }
+        //         i++;
+        //     }
+        //     else
+        //     {
+        //         i = 1;
+        //     }
+        //     r++;
+        // }
+        List<Cell> cellsDone1 = new List<Cell>();
+        for (int i = 0; i <= 7; i++)
         {
-            if (cell.cellState == CellState.active)
+            int q = 0;
+            for (int j = 0; j <= 7; j++)
             {
-                i++;
-                if (i == 8)
+                for (int t = j; t <= 63; t += 8)
                 {
-                    for (int j = r; j > r - 8; j--)
+                    if (cells[t].cellState == CellState.active)
                     {
-                        cells[j].SetState(CellState.free);
-                        Destroy(cells[j].transform.GetChild(0).gameObject);
-                    }
-                }
-            }
-            else
-            {
-                i = 0;
-            }
-            r++;
-        }
-        int t = 0;
-        for (int k = 0; k < 8; k++)
-        {
-            for (int h = k; h < cells.Count; h += 8)
-            {
-                if (cells[h].cellState == CellState.active)
-                {
-                    t++;
-                    if (t == 8)
-                    {
-                        for (int u = k; u < cells.Count; u += 8)
+                        if (cells[t].transform.position.y == i)
                         {
-                            cells[u].SetState(CellState.free);
-                            Destroy(cells[u].transform.GetChild(0).gameObject);
+                            q++;
+                            cellsDone1.Add(cells[t]);
+                        }
+                        else
+                        {
+                            q = 0;
+                            cellsDone1.Clear();
+                        }
+                    }
+                    print(cellsDone1.Count);
+                    if (q >= 8)
+                    {
+                        foreach (Cell cell in cellsDone1)
+                        {
+                            Destroy(cell.transform.GetChild(1).gameObject);
+                            cell.SetState(CellState.free);
                         }
                     }
                 }
-                else
+            }
+        }
+        List<Cell> cellsDone = new List<Cell>();
+        for (int k = 0; k <= 7; k++)
+        {
+            int m = 0;
+            for (int h = 0; h <= 63; h++)
+            {
+                if (cells[h].cellState == CellState.active)
                 {
-                    t = 0;
+                    if (cells[h].transform.position.x == k)
+                    {
+                        m++;
+                        cellsDone.Add(cells[h]);
+                    }
+                    else
+                    {
+                        m = 0;
+                        cellsDone.Clear();
+                    }
+                }
+                // print(cellsDone.Count);
+                if (m >= 8)
+                {
+                    foreach (Cell cell in cellsDone)
+                    {
+                        Destroy(cell.transform.GetChild(1).gameObject);
+                        cell.SetState(CellState.free);
+                    }
                 }
             }
         }
@@ -80,16 +141,5 @@ public class Broad : MonoBehaviour
         {
             cell.SetState(CellState.free);
         }
-    }
-    // Start is called before the first frame update
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
     }
 }
