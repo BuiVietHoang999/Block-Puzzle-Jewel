@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using EgdFoundation;
 using Microsoft.Unity.VisualStudio.Editor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,6 +15,7 @@ public class Cell : MonoBehaviour
 {
     public int id;
     public CellState cellState = CellState.free;
+    [SerializeField] private SpriteRenderer stateSprite;
     [SerializeField] private Sprite free, hover, active;
     public void SetState(CellState state)
     {
@@ -20,15 +23,33 @@ public class Cell : MonoBehaviour
         switch (state)
         {
             case CellState.free:
-                GetComponent<SpriteRenderer>().sprite = free;
+                stateSprite.sprite = free;
                 break;
             case CellState.hover:
-                GetComponent<SpriteRenderer>().sprite = hover;
+                stateSprite.sprite = hover;
                 break;
             case CellState.active:
                 cellState = CellState.active;
-                GetComponent<SpriteRenderer>().sprite = active;
+                stateSprite.sprite = active;
                 break;
         }
     }
+    private void Awake()
+    {
+        SignalBus.I.Register<ResetCellSignal>(ResetCellHandle);
+    }
+    private void OnDestroy()
+    {
+        SignalBus.I.Unregister<ResetCellSignal>(ResetCellHandle);
+    }
+
+    private void ResetCellHandle(ResetCellSignal signal)
+    {
+        if (id >= signal.minId && id <= signal.maxId)
+        {
+            Destroy(transform.GetChild(1).gameObject);
+            SetState(CellState.free);
+        }
+    }
+
 }

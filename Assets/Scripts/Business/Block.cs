@@ -6,76 +6,83 @@ using UnityEngine;
 public enum BlockState
 {
     free,
+    hover,
     active
 }
 public class Block : MonoBehaviour
 {
     public BlockState blockState = BlockState.free;
-    [SerializeField] private GameObject objectRay;
+    [SerializeField] private GameObject objectRay, objectRay2;
+    [SerializeField] private LayerMask layerMask;
     private List<Cell> cells = new List<Cell>();
-
+    Cell cell;
     private void Awake()
     {
-        SignalBus.I.Register<ResetCellsSignal>(ResetCellsHandle);
+        RegisterEvents();
     }
     private void OnDestroy()
     {
-        SignalBus.I.Unregister<ResetCellsSignal>(ResetCellsHandle);
+        UnRegisterEvents();
+    }
+    private void RegisterEvents()
+    {
+        SignalBus.I.Register<MouseButtonUpSignal>(MouseButtonUpHandle);
+        SignalBus.I.Register<InBroadSignal>(InBroadHandle);
+        SignalBus.I.Register<OutBroadSignal>(OutBroadHandle);
+    }
+    private void UnRegisterEvents()
+    {
+        SignalBus.I.Unregister<MouseButtonUpSignal>(MouseButtonUpHandle);
+        SignalBus.I.Unregister<InBroadSignal>(InBroadHandle);
+        SignalBus.I.Unregister<OutBroadSignal>(OutBroadHandle);
     }
 
-    private void ResetCellsHandle(ResetCellsSignal signal)
+    private void OutBroadHandle(OutBroadSignal signal)
     {
-        print("aaa");
         ResetCells();
-        Blocks blocks = transform.parent.GetComponent<Blocks>();
-        blocks.isOk = true;
+        cell = null;
+        blockState = BlockState.free;
     }
 
 
-    public void Update()
+    private void InBroadHandle(InBroadSignal signal)
     {
-        Blocks blocks = transform.parent.GetComponent<Blocks>();
-        if (blocks.transform.position.x > 0 && blocks.transform.position.x <= (8 - blocks.size.x)
-        && blocks.transform.position.y > 0 && blocks.transform.position.y <= (8 - blocks.size.y))
+        RaycastHit2D hit = Physics2D.Raycast(objectRay2.transform.position, objectRay2.transform.up, 0, layerMask);
+        if (hit.collider != null)
         {
-            RaycastHit2D hit = Physics2D.Raycast(objectRay.transform.position, objectRay.transform.up, 2);
-            if (hit.collider == null) return;
-            Cell cell = hit.collider.gameObject.GetComponent<Cell>();
-            if (cell == null) return;
-            if (cell.cellState == CellState.active)
-            {
-                print("fire");
-                SignalBus.I.FireSignal<ResetCellsSignal>(new ResetCellsSignal());
-            }
-            // else
-            // {
-            //     blocks.isOk = false;
-            // }
-            if (!blocks.isOk && hit.distance < .5f && cell.cellState == CellState.free)
-            {
-                ResetCells();
-                cells.Add(cell);
-                cell.SetState(CellState.hover);
-
-            }
-            else if (hit.distance >= .5f && cell.cellState == CellState.hover)
-            {
-                ResetCells();
-            }
-
-            if (!GameManager.I.isDrag && blockState == BlockState.free)
-            {
-                transform.SetParent(cell.transform);
-                transform.localPosition = Vector2.zero;
-                this.enabled = false;
-                this.GetComponentInChildren<Collider2D>().enabled = false;
-                cell.SetState(CellState.active);
-                blockState = BlockState.active;
-            }
+            cell = hit.collider.GetComponent<Cell>();
         }
-        else
+        if (cell == null) return;
+        if (cell.cellState == CellState.active)
         {
             ResetCells();
+            blockState = BlockState.free;
+        }
+        if (cell.cellState == CellState.free)
+        {
+            ResetCells();
+            cells.Add(cell);
+            cell.SetState(CellState.hover);
+            blockState = BlockState.hover;
+        }
+        Blocks blocks = transform.parent.GetComponent<Blocks>();
+        if (blocks.blocksState == BlocksState.free)
+        {
+            ResetCells();
+            cell = null;
+        }
+    }
+
+
+    private void MouseButtonUpHandle(MouseButtonUpSignal signal)
+    {
+        if (cell != null && blockState == BlockState.hover)
+        {
+            transform.SetParent(cell.transform);
+            transform.localPosition = Vector2.zero;
+            Destroy(this);
+            cell.SetState(CellState.active);
+            blockState = BlockState.active;
         }
     }
     private void ResetCells()
@@ -85,6 +92,5 @@ public class Block : MonoBehaviour
             cell.SetState(CellState.free);
         }
         cells.Clear();
-
     }
 }
